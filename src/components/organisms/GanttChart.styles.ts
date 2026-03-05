@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { media } from '../../styles/theme';
 
 export const GanttWrap = styled.div`
   display: flex;
@@ -14,6 +15,11 @@ export const GanttHeader = styled.div`
   gap: 16px;
   padding: 8px 0 12px;
   flex-shrink: 0;
+
+  ${media.mobile} {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 `;
 
 export const GanttGrid = styled.div`
@@ -113,6 +119,12 @@ export const GanttColHeader = styled.div<{ $isWeekend?: boolean }>`
   border-right: 1px solid ${({ theme }) => theme.colors.border};
   text-align: center;
   min-width: 24px;
+
+  ${media.mobile} {
+    padding: 3px 4px;
+    font-size: 10px;
+    min-width: 20px;
+  }
 `;
 
 export const GanttColHeadersRow = styled.div`
@@ -132,5 +144,10 @@ export const GanttMonthHeader = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  ${media.mobile} {
+    padding: 3px 4px;
+    font-size: 11px;
+  }
 `;
 

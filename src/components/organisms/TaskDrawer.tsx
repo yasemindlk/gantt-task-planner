@@ -5,6 +5,7 @@ import type { RootState } from '../../store';
 import { addTask } from '../../store/slices/taskSlice';
 import type { Task, TaskType } from '../../types/task.types';
 import { useUI } from '../../hooks/useUI';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { FormDateField } from '../molecules';
 import { PrimaryButton } from '../atoms';
 import { toDateString } from '../../utils/dateHelpers';
@@ -28,6 +29,7 @@ interface FormValues {
 export function TaskDrawer() {
   const [form] = Form.useForm<FormValues>();
   const { drawerOpen, closeDrawer, drawerMode, selectedParentId } = useUI();
+  const isMobile = useIsMobile();
   const tasks = useSelector((state: RootState) => state.tasks.items);
   const dispatch = useDispatch();
 
@@ -97,7 +99,7 @@ export function TaskDrawer() {
       title="Yeni görev"
       open={drawerOpen}
       onClose={handleClose}
-      width={400}
+      width={isMobile ? '100%' : 400}
       destroyOnClose
       footer={null}
     >

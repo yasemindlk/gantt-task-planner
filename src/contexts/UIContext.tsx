@@ -7,6 +7,7 @@ import {
   type UIState,
   type UIContextValue,
   type OpenDrawerPayload,
+  type ActivePanel,
 } from './uiContextConfig';
 
 export function UIProvider({ children }: { children: ReactNode }) {
@@ -46,6 +47,10 @@ export function UIProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, taskSortKey, taskSortOrder }));
   }, []);
 
+  const setActivePanel = useCallback((activePanel: ActivePanel) => {
+    setState((prev) => ({ ...prev, activePanel }));
+  }, []);
+
   const value = useMemo<UIContextValue>(
     () => ({
       ...state,
@@ -54,8 +59,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
       setViewMode,
       toggleMainTaskExpanded,
       setTaskSort,
+      setActivePanel,
     }),
-    [state, openDrawer, closeDrawer, setViewMode, toggleMainTaskExpanded, setTaskSort]
+    [state, openDrawer, closeDrawer, setViewMode, toggleMainTaskExpanded, setTaskSort, setActivePanel]
   );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

@@ -1,7 +1,24 @@
 export type ThemeMode = 'light' | 'dark';
 
+export interface Breakpoints {
+  mobile: string;
+  tablet: string;
+}
+
+export const breakpoints: Breakpoints = {
+  mobile: '768px',
+  tablet: '1024px',
+};
+
+export const media = {
+  mobile: `@media (max-width: ${breakpoints.mobile})`,
+  tablet: `@media (max-width: ${breakpoints.tablet})`,
+  desktop: `@media (min-width: ${breakpoints.tablet})`,
+};
+
 export interface AppTheme {
   mode: ThemeMode;
+  breakpoints: Breakpoints;
   colors: {
     primary: string;
     background: string;
@@ -38,11 +55,13 @@ const darkThemeColors = {
 
 export const lightTheme: AppTheme = {
   mode: 'light',
+  breakpoints,
   colors: lightThemeColors,
 };
 
 export const darkTheme: AppTheme = {
   mode: 'dark',
+  breakpoints,
   colors: darkThemeColors,
 };
 

@@ -10,6 +10,7 @@ import { formatDisplayDate, getTaskDurationDays, getMainTaskRange } from '../../
 import { getTaskTree, sortTaskTree, type TaskSortKey } from '../../utils/sortHelpers';
 import { validateTitle, validateMainTaskUnique } from '../../utils/taskValidators';
 import { useUI } from '../../hooks/useUI';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { IconButton, SortableHeader, TaskTitle } from '../atoms';
 
 interface TableRow extends Task {
@@ -19,6 +20,7 @@ interface TableRow extends Task {
 
 export function TaskList() {
   const tasks = useSelector((state: RootState) => state.tasks.items);
+  const isMobile = useIsMobile();
   const dispatch = useDispatch();
   const {
     openDrawer,
@@ -84,127 +86,139 @@ export function TaskList() {
     [tasks, dispatch],
   );
 
-  const columns: ColumnsType<TableRow> = [
-    {
-      title: (
-        <SortableHeader
-          label="Görevler"
-          active={sortKey === 'title'}
-          direction={sortOrder}
-          onClick={() => handleSort('title')}
-        />
-      ),
-      dataIndex: 'title',
-      key: 'title',
-      ellipsis: true,
-      render: (title: string, record) => (
-        <TaskTitle
-          title={title}
-          type={record.type}
-          editing={editingTaskId === record.id}
-          onSave={(newTitle) => handleRename(record, newTitle)}
-          onCancel={() => setEditingTaskId(null)}
-        />
-      ),
-    },
-    {
-      title: (
-        <SortableHeader
-          label="Başlangıç Tarihleri"
-          active={sortKey === 'startDate'}
-          direction={sortOrder}
-          onClick={() => handleSort('startDate')}
-        />
-      ),
-      dataIndex: 'startDate',
-      key: 'startDate',
-      width: 110,
-      render: (date: string) => formatDisplayDate(date),
-    },
-    {
-      title: (
-        <SortableHeader
-          label="Süre"
-          active={sortKey === 'duration'}
-          direction={sortOrder}
-          onClick={() => handleSort('duration')}
-        />
-      ),
-      key: 'duration',
-      width: 50,
-      align: 'center',
-      render: (_: unknown, record: TableRow) =>
-        getTaskDurationDays(record.startDate, record.endDate),
-    },
-    {
-      title: (
-        <IconButton
-          icon={<PlusOutlined />}
-          ariaLabel="Yeni ana görev ekle"
-          onClick={() => openDrawer({ mode: 'add' })}
-        />
-      ),
-      key: 'add',
-      width: 40,
-      align: 'center',
-      render: (_: unknown, record: TableRow) =>
-        record.type === 'main' ? (
+  const columns: ColumnsType<TableRow> = useMemo(() => {
+    const cols: ColumnsType<TableRow> = [
+      {
+        title: (
+          <SortableHeader
+            label="Görevler"
+            active={sortKey === 'title'}
+            direction={sortOrder}
+            onClick={() => handleSort('title')}
+          />
+        ),
+        dataIndex: 'title',
+        key: 'title',
+        ellipsis: true,
+        render: (title: string, record) => (
+          <TaskTitle
+            title={title}
+            type={record.type}
+            editing={editingTaskId === record.id}
+            onSave={(newTitle) => handleRename(record, newTitle)}
+            onCancel={() => setEditingTaskId(null)}
+          />
+        ),
+      },
+    ];
+
+    if (!isMobile) {
+      cols.push(
+        {
+          title: (
+            <SortableHeader
+              label="Başlangıç Tarihleri"
+              active={sortKey === 'startDate'}
+              direction={sortOrder}
+              onClick={() => handleSort('startDate')}
+            />
+          ),
+          dataIndex: 'startDate',
+          key: 'startDate',
+          width: 110,
+          render: (date: string) => formatDisplayDate(date),
+        },
+        {
+          title: (
+            <SortableHeader
+              label="Süre"
+              active={sortKey === 'duration'}
+              direction={sortOrder}
+              onClick={() => handleSort('duration')}
+            />
+          ),
+          key: 'duration',
+          width: 50,
+          align: 'center' as const,
+          render: (_: unknown, record: TableRow) =>
+            getTaskDurationDays(record.startDate, record.endDate),
+        },
+      );
+    }
+
+    cols.push(
+      {
+        title: (
           <IconButton
             icon={<PlusOutlined />}
-            ariaLabel="Alt görev ekle"
+            ariaLabel="Yeni ana görev ekle"
+            onClick={() => openDrawer({ mode: 'add' })}
+          />
+        ),
+        key: 'add',
+        width: 40,
+        align: 'center' as const,
+        render: (_: unknown, record: TableRow) =>
+          record.type === 'main' ? (
+            <IconButton
+              icon={<PlusOutlined />}
+              ariaLabel="Alt görev ekle"
+              onClick={(e) => {
+                e.stopPropagation();
+                openDrawer({ parentId: record.id, mode: 'add' });
+              }}
+            />
+          ) : null,
+      },
+      {
+        title: '',
+        key: 'edit',
+        width: 40,
+        align: 'center' as const,
+        render: (_: unknown, record: TableRow) => (
+          <IconButton
+            icon={<EditOutlined />}
+            ariaLabel="Görevi düzenle"
             onClick={(e) => {
               e.stopPropagation();
-              openDrawer({ parentId: record.id, mode: 'add' });
+              setEditingTaskId(record.id);
             }}
           />
-        ) : null,
-    },
-    {
-      title: '',
-      key: 'edit',
-      width: 40,
-      align: 'center',
-      render: (_: unknown, record: TableRow) => (
-        <IconButton
-          icon={<EditOutlined />}
-          ariaLabel="Görevi düzenle"
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditingTaskId(record.id);
-          }}
-        />
-      ),
-    },
-    {
-      title: '',
-      key: 'delete',
-      width: 40,
-      align: 'center',
-      render: (_: unknown, record: TableRow) => (
-        <Popconfirm
-          title={
-            record.type === 'main'
-              ? 'Bu görev ve tüm alt görevleri silinecek. Emin misiniz?'
-              : 'Bu alt görev silinecek. Emin misiniz?'
-          }
-          onConfirm={(e) => {
-            e?.stopPropagation();
-            dispatch(removeTask(record.id));
-          }}
-          onCancel={(e) => e?.stopPropagation()}
-          okText="Sil"
-          cancelText="İptal"
-        >
-          <IconButton
-            icon={<DeleteOutlined />}
-            danger
-            ariaLabel="Görevi sil"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </Popconfirm>
-      ),
-    },
-  ];
+        ),
+      },
+      {
+        title: '',
+        key: 'delete',
+        width: 40,
+        align: 'center' as const,
+        render: (_: unknown, record: TableRow) => (
+          <Popconfirm
+            title={
+              record.type === 'main'
+                ? 'Bu görev ve tüm alt görevleri silinecek. Emin misiniz?'
+                : 'Bu alt görev silinecek. Emin misiniz?'
+            }
+            onConfirm={(e) => {
+              e?.stopPropagation();
+              dispatch(removeTask(record.id));
+            }}
+            onCancel={(e) => e?.stopPropagation()}
+            okText="Sil"
+            cancelText="İptal"
+          >
+            <IconButton
+              icon={<DeleteOutlined />}
+              danger
+              ariaLabel="Görevi sil"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
+        ),
+      },
+    );
+
+    return cols;
+  }, [sortKey, sortOrder, editingTaskId, isMobile, handleRename, handleSort, openDrawer, dispatch]);
 
   return (
     <Table<TableRow>

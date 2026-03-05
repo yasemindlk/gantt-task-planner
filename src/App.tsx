@@ -14,10 +14,12 @@ import {
   AppTitle,
   AppSidebar,
   AppMain,
+  MobileTabBar,
+  MobileTab,
 } from './App.styles';
 
 function App() {
-  const { openDrawer } = useUI();
+  const { openDrawer, activePanel, setActivePanel } = useUI();
   const theme = useTheme();
   const { mode, toggleMode } = useThemeMode();
 
@@ -61,10 +63,26 @@ function App() {
             </Button>
           </div>
         </AppHeader>
-        <AppSidebar>
+
+        <MobileTabBar>
+          <MobileTab
+            $active={activePanel === 'tasks'}
+            onClick={() => setActivePanel('tasks')}
+          >
+            Görevler
+          </MobileTab>
+          <MobileTab
+            $active={activePanel === 'gantt'}
+            onClick={() => setActivePanel('gantt')}
+          >
+            Gantt
+          </MobileTab>
+        </MobileTabBar>
+
+        <AppSidebar $hidden={activePanel !== 'tasks'}>
           <TaskList />
         </AppSidebar>
-        <AppMain>
+        <AppMain $hidden={activePanel !== 'gantt'}>
           <GanttChart />
         </AppMain>
       </AppLayout>

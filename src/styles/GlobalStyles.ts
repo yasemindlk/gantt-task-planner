@@ -1,4 +1,5 @@
 import { createGlobalStyle } from 'styled-components';
+import { media } from './theme';
 
 export const GlobalStyles = createGlobalStyle`
   :root {
@@ -21,9 +22,16 @@ export const GlobalStyles = createGlobalStyle`
     min-height: 100vh;
     color: ${({ theme }) => theme.colors.text};
     background-color: ${({ theme }) => theme.colors.background};
+    -webkit-text-size-adjust: 100%;
   }
 
   #root {
     min-height: 100vh;
+  }
+
+  ${media.mobile} {
+    .ant-table-cell {
+      padding: 6px 8px !important;
+    }
   }
 `;
