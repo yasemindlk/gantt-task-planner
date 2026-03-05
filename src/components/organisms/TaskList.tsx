@@ -1,13 +1,14 @@
-import { useMemo } from 'react';
-import { Table, Popconfirm } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useMemo, useCallback, useState } from 'react';
+import { Table, Popconfirm, message } from 'antd';
+import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../../store';
-import { removeTask } from '../../store/slices/taskSlice';
+import { removeTask, updateTask } from '../../store/slices/taskSlice';
 import type { Task } from '../../types/task.types';
 import { formatDisplayDate, getTaskDurationDays, getMainTaskRange } from '../../utils/dateHelpers';
 import { getTaskTree, sortTaskTree, type TaskSortKey } from '../../utils/sortHelpers';
+import { validateTitle, validateMainTaskUnique } from '../../utils/taskValidators';
 import { useUI } from '../../hooks/useUI';
 import { IconButton, SortableHeader, TaskTitle } from '../atoms';
 
@@ -59,6 +60,30 @@ export function TaskList() {
     }
   };
 
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+
+  const handleRename = useCallback(
+    (record: TableRow, newTitle: string) => {
+      const titleCheck = validateTitle(newTitle);
+      if (!titleCheck.valid) {
+        message.error(titleCheck.error);
+        return;
+      }
+
+      if (record.type === 'main') {
+        const uniqueCheck = validateMainTaskUnique(newTitle, tasks.filter((t) => t.id !== record.id));
+        if (!uniqueCheck.valid) {
+          message.error(uniqueCheck.error);
+          return;
+        }
+      }
+
+      dispatch(updateTask({ id: record.id, updates: { title: newTitle } }));
+      setEditingTaskId(null);
+    },
+    [tasks, dispatch],
+  );
+
   const columns: ColumnsType<TableRow> = [
     {
       title: (
@@ -72,7 +97,15 @@ export function TaskList() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      render: (title: string, record) => <TaskTitle title={title} type={record.type} />,
+      render: (title: string, record) => (
+        <TaskTitle
+          title={title}
+          type={record.type}
+          editing={editingTaskId === record.id}
+          onSave={(newTitle) => handleRename(record, newTitle)}
+          onCancel={() => setEditingTaskId(null)}
+        />
+      ),
     },
     {
       title: (
@@ -125,6 +158,22 @@ export function TaskList() {
             }}
           />
         ) : null,
+    },
+    {
+      title: '',
+      key: 'edit',
+      width: 40,
+      align: 'center',
+      render: (_: unknown, record: TableRow) => (
+        <IconButton
+          icon={<EditOutlined />}
+          ariaLabel="Görevi düzenle"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingTaskId(record.id);
+          }}
+        />
+      ),
     },
     {
       title: '',
